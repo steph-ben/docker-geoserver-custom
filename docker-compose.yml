@@ -1,0 +1,32 @@
+services:
+
+   geoserver:
+      image: mfi/geoserver:${GS_VERSION}
+      build:
+        context: .
+        args:
+          GS_VERSION: ${GS_VERSION}
+      volumes:
+        - ./geoserver-data:/opt/geoserver/data_dir
+      ports:
+        - "8600:8080"
+      restart: on-failure
+      environment:
+        - GEOSERVER_DATA_DIR=${GEOSERVER_DATA_DIR}
+        - GEOWEBCACHE_CACHE_DIR=${GEOWEBCACHE_CACHE_DIR}
+        - GEOSERVER_ADMIN_PASSWORD=${GEOSERVER_ADMIN_PASSWORD}
+        - GEOSERVER_ADMIN_USER=${GEOSERVER_ADMIN_USER}
+        - INITIAL_MEMORY=${INITIAL_MEMORY}
+        - MAXIMUM_MEMORY=${MAXIMUM_MEMORY}
+        #- SAMPLE_DATA=true
+        - STABLE_EXTENSIONS=netcdf-plugin,grib-plugin,netcdf-out-plugin,h2-plugin
+        - COMMUNITY_EXTENSIONS=colormap-plugin,gdal-wcs-plugin,gdal-wps-plugin,geostyler-plugin
+        # Following options are needed:
+        #   * NetCDF plugin, see https://docs.geoserver.org/stable/en/user/extensions/netcdf/netcdf.html
+        #   * ImageMosaic, see https://docs.geoserver.org/latest/en/user/tutorials/imagemosaic_timeseries/imagemosaic_timeseries.html#tutorial-imagemosaic-timeseries
+        - GEOSERVER_OPTS_EXTRA="-Dorg.geotools.shapefile.datetime=true -Duser.timezone=GMT -Dorg.geotools.coverage.io.netcdf.auxiliary.store=true -Dorg.geotools.coverage.io.netcdf.param.max=lat,lon,time -Dorg.geotools.coverage.io.netcdf.param.min=lat,lon,time"
+      healthcheck:
+        test: curl --fail -s http://localhost:8080/ || exit 1
+        interval: 1m30s
+        timeout: 10s
+        retries: 3
